@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 import numpy as np
+from maze import *
 
 frame = Tk()
 frame.title("Program")
@@ -15,13 +16,16 @@ canvas.grid(row = 0, column = 0, rowspan = 50, columnspan = 1)
 
 
 def maze_gen():
-    maze_width = 50 if len(a:= width_input.get()) == 0 else int(a)
-    maze_height = 50 if len(a:= height_input.get()) == 0 else int(a)
-    maze = np.random.randint(2, size=(maze_height, maze_width))
+    maze_width = 50 if len(width_input.get()) == 0 else int(width_input.get())
+    maze_height = 50 if len(height_input.get()) == 0 else int(height_input.get())
+
+    ix, iy = 1, 1  # home location
+    f = 5  # number of food places
+    maze = Maze(maze_width, maze_height, ix, iy, f).make_maze()
     x_init = 10
     y = 10
-    cell_width = (c_width - 2*x_init)/maze_width
-    cell_height = (c_height-2*y)/ maze_height
+    cell_width = (c_width - 2*x_init)//maze_width
+    cell_height = (c_height-2*y)// maze_height
 
     for row in maze:
         x = x_init
