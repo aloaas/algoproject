@@ -138,18 +138,26 @@ class Maze:
     def remove_walls_around_point(self, x, y):
         '''Remove all the walls surroundig point (x,y). This helps to avoid food blocking the maze.'''
 
-        # general case: (x,y) is not next to the outer wall
-        if x != 1 and x != len(self.maze_rows) - 2 and \
-                y != 1 and y != len(self.maze_rows) - 2:
-            self.maze_rows[x + 1][y] = 0
-            self.maze_rows[x][y + 1] = 0
-            self.maze_rows[x - 1][y] = 0
-            self.maze_rows[x][y - 1] = 0
-            #diagonal element of (x,y)
-            self.maze_rows[x+1][y+1] = 0
-            self.maze_rows[x+1][y-1] = 0
-            self.maze_rows[x-1][y+1] = 0
-            self.maze_rows[x-1][y-1] = 0
+        self.maze_rows[x + 1][y] = 0
+        self.maze_rows[x][y + 1] = 0
+        self.maze_rows[x - 1][y] = 0
+        self.maze_rows[x][y - 1] = 0
+        self.maze_rows[x + 1][y + 1] = 0
+        self.maze_rows[x + 1][y - 1] = 0
+        self.maze_rows[x - 1][y + 1] = 0
+        self.maze_rows[x - 1][y - 1] = 0
+
+    def repair_outer_wall(self):
+        '''If food/home was placed next to outer wall, then 'remove_walls_around_point' removed it.
+        Therefore we need to fix the outer wall.'''
+
+        for i in range(self.nx * 2):
+            self.maze_rows[0][i] = 1
+            self.maze_rows[0][i] = 1
+
+        for j in range(self.ny * 2):
+            self.maze_rows[j][0] = 1
+            self.maze_rows[j][self.ny * 2] = 1
 
     def make_maze(self):
 
@@ -175,7 +183,6 @@ class Maze:
         self.to_numpy()  # changes from cells based maze to numpy based maze
         self.remove_random_walls()  # make the maze more sparse
 
-        # home
         self.maze_rows[2 * self.ix + 1][2 * self.iy + 1] = 3  # add home location (denoted by 3)
         self.remove_walls_around_point(2 * self.ix + 1, 2 * self.iy + 1)  # remove walls around home
 
@@ -188,6 +195,8 @@ class Maze:
         # remove walls around food locations
         for x, y in self.food_locations:
             self.remove_walls_around_point(x, y)
+
+        self.repair_outer_wall()
 
         return self.maze_rows
 
