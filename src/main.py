@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter import messagebox
 import numpy as np
 from maze import *
+from ants import *
 
 frame = Tk()
 frame.title("Program")
@@ -17,8 +18,39 @@ canvas.grid(row = 0, column = 0, rowspan = 50, columnspan = 1)
 #value based on pixel color
 color = ["white", "gray", "green", "blue"]
 
+def start_algo():
+    global maze, x_init, y, cell_width, cell_height
+    rectangles = []
+    for locations, pheromones in ant_colony(maze,
+                                            n_ants=5, step_by_step=False,
+                                            vaporization_rate=0.98):
+        for rectangle in rectangles:
+            canvas.delete(rectangle)
+        y_init = y
+        
+        for row in pheromones:
+            x = x_init
+            for pixel in row:
+                if pixel >0:
+                    value = int(pixel*10)
+                    print(value)
+                    fill = from_rgb((value, 255, 255))
+                    cell = canvas.create_rectangle(x, y, x+cell_width, y+cell_height, fill = fill, outline = fill)
+                    rectangles.append(cell)
+                x += cell_width
+            y += cell_height
+            canvas.update_idletasks()
+        y = y_init
+        #print(locations, pheromones)
+        
+#https://stackoverflow.com/questions/51591456/can-i-use-rgb-in-tkinter        
+def from_rgb(rgb):
+    """translates an rgb tuple of int to a tkinter friendly color code
+    """
+    return "#%02x%02x%02x" % rgb         
 
 def maze_gen():
+    global maze, x_init, y, cell_width, cell_height
     canvas.delete("all")    #clear whatever was previously on screen
     #try to get input value or reset to default
     maze_width = 50 if len(width_input.get()) == 0 else int(width_input.get())
@@ -45,6 +77,8 @@ def maze_gen():
             canvas.create_rectangle(x, y, x+cell_width, y+cell_height, fill = fill, outline = fill)
             x += cell_width
         y += cell_height
+    x_init = c_width //(maze_width //2)
+    y = c_height// (maze_height //2)
 
 
 # failsafe for numeric input
@@ -96,5 +130,7 @@ food_input.bind('<Control-a>', callback)
 create_maze_button = Button(frame, text="Generate maze", command = maze_gen)
 create_maze_button.grid(row = 6, column = 1, sticky = W+E+N+S)
 
+start_button = Button(frame, text="Start algorithm", command = start_algo)
+start_button.grid(row = 7, column = 1, sticky = W+E+N+S)
 
 frame.mainloop()
