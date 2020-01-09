@@ -1,6 +1,7 @@
 import random
 import numpy as np
 
+
 # Used ideas for code from https://scipython.com/blog/making-a-maze (Christian Hill, April 2017)
 
 class Cell:
@@ -40,10 +41,13 @@ class Maze:
         self.ix, self.iy = ix, iy
         self.maze_map = np.zeros([self.nx, self.ny], dtype=object)
 
-        # filling maze map
+        # filling maze map with cells
         for y in range(ny):
             for x in range(nx):
                 self.maze_map[x, y] = Cell(x, y)
+
+        # final maze map as numpy array
+        self.maze_rows = np.full([1, self.nx * 2 + 1], 1)
 
     def cell_at(self, x, y):
         """Cell at location (x,y)"""
@@ -53,7 +57,7 @@ class Maze:
         """
         Convert the map of cells to numpy array after the maze map is ready.
         """
-        maze_rows = np.full([1, self.nx * 2 + 1], 1)  # maze is surrounded by 1 (wall)
+        # self.maze_rows = np.full([1, self.nx * 2 + 1], 1)  # maze is surrounded by 1 (wall)
 
         for y in range(self.ny):
 
@@ -65,7 +69,7 @@ class Maze:
                 else:
                     maze_row = np.append(maze_row, 0)
                     maze_row = np.append(maze_row, 0)
-            maze_rows = np.append(maze_rows, np.array([maze_row]), axis=0)
+            self.maze_rows = np.append(self.maze_rows, np.array([maze_row]), axis=0)
 
             maze_row = np.array([[1]])  # row starts with 1 (wall)
             for x in range(self.nx):
@@ -75,9 +79,9 @@ class Maze:
                 else:
                     maze_row = np.append(maze_row, 0)
                     maze_row = np.append(maze_row, 1)
-            maze_rows = np.append(maze_rows, np.array([maze_row]), axis=0)
+            self.maze_rows = np.append(self.maze_rows, np.array([maze_row]), axis=0)
 
-        return maze_rows
+        return self.maze_rows
 
     def find_valid_neighbours(self, cell):
         """Find unvisited neighbours of given cell."""
@@ -95,7 +99,7 @@ class Maze:
                     neighbours.append((direction, neighbour))
         return neighbours
 
-    def place_food(self, final_map):
+    def place_food(self):
         """Randomly choose a place where to put food."""
 
         fx = random.randint(1, self.nx * 2 - 1)
@@ -104,11 +108,11 @@ class Maze:
         # until we have found an empty spot (denoted by 0)
         while occupied:
             fy = random.randint(1, self.ny * 2 - 1)
-            if final_map[fx][fy] == 0:
-                final_map[fx][fy] = 2  # food is denoted by 2
+            if self.maze_rows[fx][fy] == 0:
+                self.maze_rows[fx][fy] = 2  # food is denoted by 2
                 occupied = False
 
-        return final_map
+        return self.maze_rows
 
     def make_maze(self):
 
@@ -120,7 +124,7 @@ class Maze:
         while nv < n:
             neighbours = self.find_valid_neighbours(current_cell)
 
-            if not neighbours: # dead-end
+            if not neighbours:  # dead-end
                 current_cell = cell_stack.pop()
                 continue
 
@@ -131,17 +135,13 @@ class Maze:
             current_cell = next_cell
             nv += 1
 
+        self.to_numpy()  # changes from cells based maze to numpy based maze
+        self.maze_rows[2 * self.ix + 1][2 * self.iy + 1] = 3  # add home location (denoted by 3)
+
         # when maze is ready, place required number of foods on empty spaces
         i = 0
-        np_maze = self.to_numpy()
-        np_maze[2 * self.ix + 1][2 * self.iy + 1] = 3  # add home location (denoted by 3)
-
         while i < self.f:
-            final_map = self.place_food(np_maze)
+            final_maze = self.place_food()
             i += 1
 
-        return final_map
-
-
-
-
+        return final_maze
