@@ -1,3 +1,4 @@
+import threading
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
@@ -18,67 +19,100 @@ canvas.grid(row = 0, column = 0, rowspan = 50, columnspan = 1)
 #value based on pixel color
 color = ["white", "gray", "green", "blue"]
 
-def start_algo():
-    global maze, x_init, y, cell_width, cell_height
-    rectangles = []
-    for locations, pheromones in ant_colony(maze,
-                                            n_ants=5, step_by_step=False,
-                                            vaporization_rate=0.98):
-        for rectangle in rectangles:
-            canvas.delete(rectangle)
-        y_init = y
-        
+class MazeCanvas():
+
+    def __init__(self, frame, canvas):
+        self.daemon = True
+        self.frame = frame
+        self.canvas = canvas
+        self.color = ["white", "gray", "green", "blue"]
+        self.maze = []
+        self.x_init = 10
+        self.y = 10
+        self.cell_width = None
+        self.cell_height = None
+        self.rectangles = []
+        self.ants = []
+        self.func = None
+        self.in_loop = False
+
+    def run(self):
+        if self.in_loop:
+            locations, pheromones = next(self.func)
+        else:
+            self.func = ant_colony(self.maze,
+                                                n_ants=5, step_by_step=False,
+                                                vaporization_rate=0.98)
+            self.in_loop = True
+            locations, pheromones = next(self.func)
+        for rectangle in self.rectangles:
+            self.canvas.delete(rectangle)
+        for ant in self.ants:
+            self.canvas.delete(ant)
+        y_init = self.y
+
+        minval = np.min(pheromones)
+        maxval = np.max(pheromones)
+        print(locations)
+        loc_y = 0
         for row in pheromones:
-            x = x_init
+            x = self.x_init
+            loc_x = 0
             for pixel in row:
                 if pixel >0:
-                    value = int(pixel*10)
-                    print(value)
-                    fill = from_rgb((value, 255, 255))
-                    cell = canvas.create_rectangle(x, y, x+cell_width, y+cell_height, fill = fill, outline = fill)
-                    rectangles.append(cell)
-                x += cell_width
-            y += cell_height
-            canvas.update_idletasks()
-        y = y_init
+                    value = int(((pixel - minval)/(maxval - minval))*255)
+                    fill = self.from_rgb((255-value, 255-value//2, 255-value//2))
+                    cell = self.canvas.create_rectangle(x+0.25*self.cell_width, self.y+0.25*self.cell_height, x+0.75*self.cell_width, self.y+0.75*self.cell_height, fill = fill, outline = fill)
+                    self.rectangles.append(cell)
+                for ant_y, ant_x in locations:
+                    if ant_x == loc_x and ant_y == loc_y:
+                        ant = self.canvas.create_oval(x + 0.4 * self.cell_width, self.y + 0.4 * self.cell_height, x + 0.6 * self.cell_width, self.y + 0.6 * self.cell_height, fill="pink", outline="pink")
+                        self.ants.append(ant)
+                x += self.cell_width
+                loc_x+=1
+            self.y += self.cell_height
+            loc_y += 1
+        self.canvas.update()
+        self.y = y_init
+        loc_y = 0
+        self.frame.after(100, self.run)
         #print(locations, pheromones)
         
-#https://stackoverflow.com/questions/51591456/can-i-use-rgb-in-tkinter        
-def from_rgb(rgb):
-    """translates an rgb tuple of int to a tkinter friendly color code
-    """
-    return "#%02x%02x%02x" % rgb         
+    #https://stackoverflow.com/questions/51591456/can-i-use-rgb-in-tkinter
+    def from_rgb(self, rgb):
+        """translates an rgb tuple of int to a tkinter friendly color code
+        """
+        return "#%02x%02x%02x" % rgb
 
-def maze_gen():
-    global maze, x_init, y, cell_width, cell_height
-    canvas.delete("all")    #clear whatever was previously on screen
-    #try to get input value or reset to default
-    maze_width = 50 if len(width_input.get()) == 0 else int(width_input.get())
-    maze_height = 50 if len(height_input.get()) == 0 else int(height_input.get())
-    f = 5 if len(food_input.get()) == 0 else int(food_input.get())
+    def maze_gen(self):
+        self.canvas.delete("all")    #clear whatever was previously on screen
+        #try to get input value or reset to default
+        maze_width = 50 if len(width_input.get()) == 0 else int(width_input.get())
+        maze_height = 50 if len(height_input.get()) == 0 else int(height_input.get())
+        f = 5 if len(food_input.get()) == 0 else int(food_input.get())
 
-    ix, iy = 1, 1  # home location
+        ix, iy = 1, 1  # home location
 
-    maze = Maze(maze_width//2, maze_height//2, ix, iy, f).make_maze()
+        self.maze = Maze(maze_width//2, maze_height//2, ix, iy, f).make_maze()
 
-    #add padding to maze in canvas
-    x_init = c_width //(maze_width //2)
-    y = c_height// (maze_height //2)
+        #add padding to maze in canvas
+        self.x_init = c_width //(maze_width //2)
+        self.y = c_height// (maze_height //2)
 
-    #calculate cell size based on maze size
-    cell_width = (c_width - 2*x_init)//maze_width
-    cell_height = (c_height-2*y)// maze_height
+        #calculate cell size based on maze size
+        self.cell_width = (c_width - 2*self.x_init)//maze_width
+        self.cell_height = (c_height-2*self.y)// maze_height
 
-    #adding rectangles
-    for row in maze:
-        x = x_init
-        for pixel in row:
-            fill = color[pixel]
-            canvas.create_rectangle(x, y, x+cell_width, y+cell_height, fill = fill, outline = fill)
-            x += cell_width
-        y += cell_height
-    x_init = c_width //(maze_width //2)
-    y = c_height// (maze_height //2)
+        #adding rectangles
+        for row in self.maze:
+            x = self.x_init
+            for pixel in row:
+                fill = self.color[pixel]
+                self.canvas.create_rectangle(x, self.y, x+self.cell_width, self.y+self.cell_height, fill = fill, outline = fill)
+                x += self.cell_width
+            self.y += self.cell_height
+        self.x_init = c_width //(maze_width //2)
+        self.y = c_height// (maze_height //2)
 
 
 # failsafe for numeric input
@@ -126,11 +160,11 @@ food_label.grid(row = 4, column = 1, sticky=W)
 food_input.grid(row = 5, column = 1,sticky = E+W)
 food_input.bind('<Control-a>', callback)
 
-
-create_maze_button = Button(frame, text="Generate maze", command = maze_gen)
+mazecanvas = MazeCanvas(frame, canvas)
+create_maze_button = Button(frame, text="Generate maze", command = mazecanvas.maze_gen)
 create_maze_button.grid(row = 6, column = 1, sticky = W+E+N+S)
 
-start_button = Button(frame, text="Start algorithm", command = start_algo)
+start_button = Button(frame, text="Start algorithm", command = mazecanvas.run)
 start_button.grid(row = 7, column = 1, sticky = W+E+N+S)
 
 frame.mainloop()

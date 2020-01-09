@@ -128,7 +128,6 @@ def ant_colony(maze, n_ants=10, vaporization_rate=0.97, pheromone_weight=0.8,
         # Update maze/Food values
         
         yield locations, pheromones
-        sleep(1)
         if step_by_step:
             input()    
             
