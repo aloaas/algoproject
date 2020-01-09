@@ -101,16 +101,37 @@ class Maze:
 
     def place_food(self):
         """Randomly choose a place where to put food."""
-
-        fx = random.randint(1, self.nx * 2 - 1)
         occupied = True
 
         # until we have found an empty spot (denoted by 0)
         while occupied:
-            fy = random.randint(1, self.ny * 2 - 1)
-            if self.maze_rows[fx][fy] == 0:
-                self.maze_rows[fx][fy] = 2  # food is denoted by 2
+            fx = random.randint(1, self.nx * 2 - 2)  # -2 becuase we dont want to remove the outer wall
+            fy = random.randint(1, self.ny * 2 - 2)
+            if self.maze_rows[fy][fx] == 0:
+                self.maze_rows[fy][fx] = 2  # food is denoted by 2
                 occupied = False
+
+        return self.maze_rows
+
+    def remove_random_walls(self):
+        """Randomly remove some of existing walls in order for the final maze to have more different
+        possibilities for the ants to move. Number of removed walls is 25% of total surface."""
+        cur_remove = 0  # number of walls that have been removed so far
+        remove = 0.25 * self.nx * self.ny  # number of walls to remove - 25% of total surface
+
+        # remove the right number of walls
+        while cur_remove < remove:
+
+            wall = False
+
+            # find a wall (denoted by 1)
+            while not wall:
+                fx = random.randint(1, self.nx * 2 - 1)  # -2 because we dont want to remove the outer wall
+                fy = random.randint(1, self.ny * 2 - 1)
+                if self.maze_rows[fy][fx] == 1:
+                    self.maze_rows[fy][fx] = 0  # wall -> empty space
+                    wall = True
+            cur_remove += 1
 
         return self.maze_rows
 
@@ -138,7 +159,9 @@ class Maze:
         self.to_numpy()  # changes from cells based maze to numpy based maze
         self.maze_rows[2 * self.ix + 1][2 * self.iy + 1] = 3  # add home location (denoted by 3)
 
-        # when maze is ready, place required number of foods on empty spaces
+        self.remove_random_walls()
+
+        # place required number of foods on empty spaces
         i = 0
         while i < self.f:
             final_maze = self.place_food()
