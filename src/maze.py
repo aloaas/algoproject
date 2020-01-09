@@ -40,14 +40,13 @@ class Maze:
         self.nx, self.ny = nx, ny
         self.ix, self.iy = ix, iy
         self.maze_map = np.zeros([self.nx, self.ny], dtype=object)
+        self.maze_rows = np.full([1, self.nx * 2 + 1], 1)  # final maze map as numpy array
+        self.food_locations = []  # coordinates of the placed food places
 
         # filling maze map with cells
         for y in range(ny):
             for x in range(nx):
                 self.maze_map[x, y] = Cell(x, y)
-
-        # final maze map as numpy array
-        self.maze_rows = np.full([1, self.nx * 2 + 1], 1)
 
     def cell_at(self, x, y):
         """Cell at location (x,y)"""
@@ -109,9 +108,10 @@ class Maze:
             fy = random.randint(1, self.ny * 2 - 2)
             if self.maze_rows[fy][fx] == 0:
                 self.maze_rows[fy][fx] = 2  # food is denoted by 2
+                self.food_locations.append((fy, fx))  # store locations where food was placed
                 occupied = False
 
-        return self.maze_rows
+        # return self.maze_rows
 
     def remove_random_walls(self):
         """Randomly remove some of existing walls in order for the final maze to have more different
@@ -135,6 +135,22 @@ class Maze:
 
         return self.maze_rows
 
+    def remove_walls_around_point(self, x, y):
+        '''Remove all the walls surroundig point (x,y). This helps to avoid food blocking the maze.'''
+
+        # general case: (x,y) is not next to the outer wall
+        if x != 1 and x != len(self.maze_rows) - 2 and \
+                y != 1 and y != len(self.maze_rows) - 2:
+            self.maze_rows[x + 1][y] = 0
+            self.maze_rows[x][y + 1] = 0
+            self.maze_rows[x - 1][y] = 0
+            self.maze_rows[x][y - 1] = 0
+            #diagonal element of (x,y)
+            self.maze_rows[x+1][y+1] = 0
+            self.maze_rows[x+1][y-1] = 0
+            self.maze_rows[x-1][y+1] = 0
+            self.maze_rows[x-1][y-1] = 0
+
     def make_maze(self):
 
         n = self.nx * self.ny
@@ -157,14 +173,21 @@ class Maze:
             nv += 1
 
         self.to_numpy()  # changes from cells based maze to numpy based maze
-        self.maze_rows[2 * self.ix + 1][2 * self.iy + 1] = 3  # add home location (denoted by 3)
+        self.remove_random_walls()  # make the maze more sparse
 
-        self.remove_random_walls()
+        # home
+        self.maze_rows[2 * self.ix + 1][2 * self.iy + 1] = 3  # add home location (denoted by 3)
+        self.remove_walls_around_point(2 * self.ix + 1, 2 * self.iy + 1)  # remove walls around home
 
         # place required number of foods on empty spaces
         i = 0
         while i < self.f:
-            final_maze = self.place_food()
+            self.place_food()
             i += 1
 
-        return final_maze
+        # remove walls around food locations
+        for x, y in self.food_locations:
+            self.remove_walls_around_point(x, y)
+
+        return self.maze_rows
+
