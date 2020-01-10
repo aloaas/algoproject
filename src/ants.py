@@ -28,12 +28,13 @@ def get_reachable_map(maze):
  #pheromone_weight, Q   
 # Functions: select_next, step(leave pheromone, pop from path)
 class Ant:
-    def __init__(self, maze, reachable_map, pheromone_map, pheromone_weight, Q):
+    def __init__(self, maze, reachable_map, pheromone_map, pheromone_weight, Q, score):
         self.maze = maze #final
         self.reachable_map = reachable_map #final
         self.pheromone_map = pheromone_map # changed when stepping towards home
         self.pheromone_weight = pheromone_weight
         self.Q = Q
+        self.score=score
         
         
         self.home = tuple(i[0] for i in np.where(maze==3))
@@ -73,6 +74,7 @@ class Ant:
         # If home is reached take food from ant, empty path incase food was not found
         if self.current==self.home:
             self.pheromone_map[self.current]+=self.pheromone_trail
+            self.score[0]+=self.food_value
             self.food_value=0
             self.pheromone_trail=0
             self.path=[self.home]
@@ -111,10 +113,13 @@ def ant_colony(maze, n_ants=10, vaporization_rate=0.97, pheromone_weight=0.8,
     
     pheromones=np.ones(maze.shape)
     pheromones[np.where(maze==1)]=0
+    score=[0]
+    # Pheromones near and at food
+    # Score keeping
     
     reachable_map=get_reachable_map(maze)
     
-    ants=[Ant(maze, reachable_map, pheromones, pheromone_weight, Q) for i in range(n_ants)]
+    ants=[Ant(maze, reachable_map, pheromones, pheromone_weight, Q, score) for i in range(n_ants)]
     
     for n_iter in range(n_iterations):
         
@@ -127,7 +132,7 @@ def ant_colony(maze, n_ants=10, vaporization_rate=0.97, pheromone_weight=0.8,
         pheromones*=vaporization_rate
         # Update maze/Food values
         
-        yield locations, pheromones
+        yield locations, pheromones, score[0]
         if step_by_step:
             input()    
             

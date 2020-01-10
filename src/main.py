@@ -38,13 +38,13 @@ class MazeCanvas():
 
     def run(self):
         if self.in_loop:
-            locations, pheromones = next(self.func)
+            locations, pheromones, score = next(self.func)
         else:
             self.func = ant_colony(self.maze,
                                                 n_ants=5, step_by_step=False,
                                                 vaporization_rate=0.98)
             self.in_loop = True
-            locations, pheromones = next(self.func)
+            locations, pheromones, score = next(self.func)
         for rectangle in self.rectangles:
             self.canvas.delete(rectangle)
         for ant in self.ants:
@@ -54,6 +54,7 @@ class MazeCanvas():
         minval = np.min(pheromones)
         maxval = np.max(pheromones)
         print(locations)
+        print(score)
         loc_y = 0
         for row in pheromones:
             x = self.x_init
