@@ -47,9 +47,10 @@ class MazeCanvas():
             locations, pheromones, score = next(self.func)
         else:
             no_ants = 5 if len(ants_input.get()) == 0 else int(ants_input.get())
+
             self.func = ant_colony(self.maze,
                                    n_ants=no_ants, step_by_step=False,
-                                   vaporization_rate=0.9999)
+                                   vaporization_rate=vp_rate_var.get(), Q=q_var.get(), pheromone_weight=pheromone_weight_var.get())
             locations, pheromones, score = next(self.func)
 
         y_init = self.y
@@ -69,7 +70,6 @@ class MazeCanvas():
                                                             x + 0.75 * self.cell_width, self.y + 0.75 * self.cell_height,
                                                             fill=fill, outline=fill)
                         self.rectangles.append(cell)
-
                     else:
                         cell = self.rectangles[cell_nr]
                         self.canvas.itemconfig(cell, fill=fill, outline = fill)
@@ -84,7 +84,7 @@ class MazeCanvas():
         else:
             for ant_y, ant_x in locations:
                 ant = self.canvas.create_image(self.x_init + self.cell_width * ant_x,
-                                               y_init + self.cell_height * ant_y, image=self.ant_image,
+                                               y_init + self.cell_height * ant_y, image=self.ant_image_u,
                                                anchor=NW)
                 self.ants.append(ant)
         self.canvas.update()
@@ -108,8 +108,15 @@ class MazeCanvas():
             y_new, x_new = new
             x_change = x_new -x_old
             y_change = y_new - y_old
-            print(x_change, y_change)
             self.canvas.move(ant, x_change*self.cell_width, y_change*self.cell_height)
+            if x_change == 1:
+                self.canvas.itemconfig(ant, image = self.ant_image_r)
+            if x_change == -1:
+                self.canvas.itemconfig(ant, image = self.ant_image_l)
+            if y_change == 1:
+                self.canvas.itemconfig(ant, image = self.ant_image_d)
+            if y_change == -1:
+                self.canvas.itemconfig(ant, image = self.ant_image_u)
             canvas.tag_raise(ant)
     def maze_gen(self):
         self.canvas.delete("all")  # clear whatever was previously on screen
@@ -141,7 +148,10 @@ class MazeCanvas():
             self.y += self.cell_height
         self.x_init = c_width // (maze_width // 2)
         self.y = c_height // (maze_height // 2)
-        self.ant_image = ImageTk.PhotoImage(Image.open("../img/ant.png").resize((self.cell_width, self.cell_height)))
+        self.ant_image_u = ImageTk.PhotoImage(Image.open("../img/ant_u.png").resize((self.cell_width, self.cell_height)))
+        self.ant_image_l = ImageTk.PhotoImage(Image.open("../img/ant_l.png").resize((self.cell_width, self.cell_height)))
+        self.ant_image_r = ImageTk.PhotoImage(Image.open("../img/ant_r.png").resize((self.cell_width, self.cell_height)))
+        self.ant_image_d = ImageTk.PhotoImage(Image.open("../img/ant_d.png").resize((self.cell_width, self.cell_height)))
 
 
 
@@ -200,11 +210,29 @@ ants_label.grid(row=3, column=1, sticky=W)
 ants_input.grid(row=3, column=2, sticky=W + E)
 ants_input.bind('<Control-a>', callback)
 
+q_var = DoubleVar()
+q_label = Label(text="Q: ", background = bgcolor, font='Helvetica 12 bold')
+q_scale = Scale(frame, from_=0.01, to=1.0, resolution = 0.01, orient = HORIZONTAL, variable = q_var, background = bgcolor, font = "Helvetica 12")
+q_label.grid(row=4, column=1, sticky=W)
+q_scale.grid(row=4, column=2, sticky=W + E)
+
+vp_rate_var = DoubleVar()
+vp_rate_label = Label(text="Vapor. rate: ", background = bgcolor, font='Helvetica 12 bold')
+vp_rate_scale = Scale(frame, from_=0.8, to=1.0, resolution = 0.001, orient = HORIZONTAL, variable = vp_rate_var, background = bgcolor, font = "Helvetica 12")
+vp_rate_label.grid(row=5, column=1, sticky=W)
+vp_rate_scale.grid(row=5, column=2, sticky=W + E)
+
+pheromone_weight_var = DoubleVar()
+pheromone_weight_label = Label(text="Pheromone w.: ", background = bgcolor, font='Helvetica 12 bold')
+pheromone_weight_scale = Scale(frame, from_=0.01, to=1.0, resolution = 0.001, orient = HORIZONTAL, variable = pheromone_weight_var, background = bgcolor, font = "Helvetica 12")
+pheromone_weight_label.grid(row=6, column=1, sticky=W)
+pheromone_weight_scale.grid(row=6, column=2, sticky=W + E)
+
 mazecanvas = MazeCanvas(frame, canvas)
 create_maze_button = Button(frame, text="Generate maze", command=mazecanvas.maze_gen, font='Helvetica 12', background = "azure")
-create_maze_button.grid(row=6, column=1,columnspan = 2,  sticky=W + E + N + S, padx = 5, pady = 5)
+create_maze_button.grid(row=7, column=1,columnspan = 2,  sticky=W + E + N + S, padx = 5, pady = 5)
 
 start_button = Button(frame, text="Start algorithm", command=mazecanvas.run, font='Helvetica 12', background = "azure")
-start_button.grid(row=7, column=1,columnspan = 2, sticky=W + E + N + S, padx = 5, pady = 5)
+start_button.grid(row=8, column=1,columnspan = 2, sticky=W + E + N + S, padx = 5, pady = 5)
 
 frame.mainloop()
