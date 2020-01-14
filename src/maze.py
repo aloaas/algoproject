@@ -138,14 +138,22 @@ class Maze:
     def remove_walls_around_point(self, x, y):
         '''Remove all the walls surroundig point (x,y). This helps to avoid food blocking the maze.'''
 
-        self.maze_rows[x + 1][y] = 0
-        self.maze_rows[x][y + 1] = 0
-        self.maze_rows[x - 1][y] = 0
-        self.maze_rows[x][y - 1] = 0
-        self.maze_rows[x + 1][y + 1] = 0
-        self.maze_rows[x + 1][y - 1] = 0
-        self.maze_rows[x - 1][y + 1] = 0
-        self.maze_rows[x - 1][y - 1] = 0
+        if self.maze_rows[x + 1][y] == 1:
+            self.maze_rows[x + 1][y] = 0
+        if self.maze_rows[x][y + 1] == 1:
+            self.maze_rows[x][y + 1] = 0
+        if self.maze_rows[x - 1][y] == 1:
+            self.maze_rows[x - 1][y] = 0
+        if self.maze_rows[x][y - 1] == 1:
+            self.maze_rows[x][y - 1] = 0
+        if self.maze_rows[x + 1][y + 1] == 1:
+            self.maze_rows[x + 1][y + 1] = 0
+        if self.maze_rows[x + 1][y - 1] == 1:
+            self.maze_rows[x + 1][y - 1] = 0
+        if self.maze_rows[x - 1][y + 1] == 1:
+            self.maze_rows[x - 1][y + 1] = 0
+        if self.maze_rows[x - 1][y - 1] == 1:
+            self.maze_rows[x - 1][y - 1] = 0
 
     def repair_outer_wall(self):
         '''If food/home was placed next to outer wall, then 'remove_walls_around_point' removed it.
