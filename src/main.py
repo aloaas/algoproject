@@ -125,7 +125,7 @@ class MazeCanvas():
         maze_height = 20 if len(height_input.get()) == 0 else int(height_input.get())
         f = 5 if len(food_input.get()) == 0 else int(food_input.get())
 
-        ix, iy = 1, 1  # home location
+        ix, iy = maze_height // 4, maze_width // 4  # home location
 
         self.maze = Maze(maze_width // 2, maze_height // 2, ix, iy, f).make_maze()
 
