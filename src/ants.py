@@ -1,4 +1,6 @@
 # Look right and down, if possible add to dictionary
+import sys
+
 import numpy as np
 from collections import defaultdict
 from time import sleep
@@ -109,7 +111,7 @@ class Ant:
     
     
 def ant_colony(maze, n_ants=10, vaporization_rate=0.97, pheromone_weight=0.8, 
-               n_iterations=1000,  Q=50, step_by_step=False):
+               n_iterations=sys.maxsize**10,  Q=50, step_by_step=False):
     
     pheromones=np.ones(maze.shape)
     pheromones[np.where(maze==1)]=0

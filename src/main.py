@@ -48,10 +48,7 @@ class MazeCanvas():
             self.func = ant_colony(self.maze,
                                    n_ants=5, step_by_step=False,
                                    vaporization_rate=0.98)
-            self.in_loop = True
             locations, pheromones, score = next(self.func)
-        for rectangle in self.rectangles:
-            self.canvas.delete(rectangle)
         for ant in self.ants:
             self.canvas.delete(ant)
         y_init = self.y
@@ -59,6 +56,7 @@ class MazeCanvas():
         minval = np.min(pheromones)
         maxval = np.max(pheromones)
         loc_y = 0
+        cell_nr = 0
         for row in pheromones:
             x = self.x_init
             loc_x = 0
@@ -66,10 +64,16 @@ class MazeCanvas():
                 if pixel > 0:
                     value = int(((pixel - minval) / (maxval - minval)) * 255)
                     fill = self.from_rgb((255 - value, 255 - value // 2, 255 - value // 2))
-                    cell = self.canvas.create_rectangle(x + 0.25 * self.cell_width, self.y + 0.25 * self.cell_height,
-                                                        x + 0.75 * self.cell_width, self.y + 0.75 * self.cell_height,
-                                                        fill=fill, outline=fill)
-                    self.rectangles.append(cell)
+                    if not self.in_loop:
+                        cell = self.canvas.create_rectangle(x + 0.25 * self.cell_width, self.y + 0.25 * self.cell_height,
+                                                            x + 0.75 * self.cell_width, self.y + 0.75 * self.cell_height,
+                                                            fill=fill, outline=fill)
+                        self.rectangles.append(cell)
+                    else:
+                        cell = self.rectangles[cell_nr]
+                        self.canvas.itemconfig(cell, fill=fill, outline = fill)
+                        cell_nr+=1
+
                 for ant_y, ant_x in locations:
                     if ant_x == loc_x and ant_y == loc_y:
 
@@ -82,6 +86,7 @@ class MazeCanvas():
         self.canvas.update()
         self.y = y_init
         loc_y = 0
+        self.in_loop = True
         self.frame.after(30, self.run)
         # print(locations, pheromones)
 
