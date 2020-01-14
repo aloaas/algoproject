@@ -40,19 +40,19 @@ class MazeCanvas():
         self.ants = []
         self.func = None
         self.in_loop = False
+        self.prev_locations = None
 
     def run(self):
         if self.in_loop:
             locations, pheromones, score = next(self.func)
         else:
+            no_ants = 5 if len(ants_input.get()) == 0 else int(ants_input.get())
             self.func = ant_colony(self.maze,
-                                   n_ants=5, step_by_step=False,
-                                   vaporization_rate=0.98)
+                                   n_ants=no_ants, step_by_step=False,
+                                   vaporization_rate=0.9999)
             locations, pheromones, score = next(self.func)
-        for ant in self.ants:
-            self.canvas.delete(ant)
-        y_init = self.y
 
+        y_init = self.y
         minval = np.min(pheromones)
         maxval = np.max(pheromones)
         loc_y = 0
@@ -69,25 +69,32 @@ class MazeCanvas():
                                                             x + 0.75 * self.cell_width, self.y + 0.75 * self.cell_height,
                                                             fill=fill, outline=fill)
                         self.rectangles.append(cell)
+
                     else:
                         cell = self.rectangles[cell_nr]
                         self.canvas.itemconfig(cell, fill=fill, outline = fill)
                         cell_nr+=1
 
-                for ant_y, ant_x in locations:
-                    if ant_x == loc_x and ant_y == loc_y:
-
-                        ant = self.canvas.create_image(x, self.y, image=self.ant_image, anchor = NW)
-                        self.ants.append(ant)
                 x += self.cell_width
                 loc_x += 1
             self.y += self.cell_height
             loc_y += 1
+        if self.in_loop:
+            self.move_ants(locations)
+        else:
+            for ant_y, ant_x in locations:
+                ant = self.canvas.create_image(self.x_init + self.cell_width * ant_x,
+                                               y_init + self.cell_height * ant_y, image=self.ant_image,
+                                               anchor=NW)
+                self.ants.append(ant)
         self.canvas.update()
         self.y = y_init
         loc_y = 0
+        self.prev_locations = locations
         self.in_loop = True
         self.frame.after(30, self.run)
+
+
         # print(locations, pheromones)
 
     # https://stackoverflow.com/questions/51591456/can-i-use-rgb-in-tkinter
@@ -95,7 +102,15 @@ class MazeCanvas():
         """translates an rgb tuple of int to a tkinter friendly color code
         """
         return "#%02x%02x%02x" % rgb
-
+    def move_ants(self, locations):
+        for ant, old, new in zip(self.ants, self.prev_locations, locations):
+            y_old, x_old = old
+            y_new, x_new = new
+            x_change = x_new -x_old
+            y_change = y_new - y_old
+            print(x_change, y_change)
+            self.canvas.move(ant, x_change*self.cell_width, y_change*self.cell_height)
+            canvas.tag_raise(ant)
     def maze_gen(self):
         self.canvas.delete("all")  # clear whatever was previously on screen
         # try to get input value or reset to default
@@ -129,6 +144,7 @@ class MazeCanvas():
         self.ant_image = ImageTk.PhotoImage(Image.open("../img/ant.png").resize((self.cell_width, self.cell_height)))
 
 
+
 # failsafe for numeric input
 def is_numeric(S):
     if len(set(list(S)) - {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}) == 0:
@@ -157,6 +173,7 @@ vcmd = (frame.register(is_numeric), '%S')
 initial_val_width = StringVar(frame, value='20')
 initial_val_height = StringVar(frame, value='20')
 initial_val_food = StringVar(frame, value='5')
+initial_val_ants = StringVar(frame, value='5')
 
 # user input widgets
 width_input = Entry(frame, validate='key', vcmd=vcmd, textvariable=initial_val_width, font='Helvetica 12')
@@ -176,6 +193,12 @@ food_label = Label(text="No. of food:", background = bgcolor, font='Helvetica 14
 food_label.grid(row=2, column=1, sticky=W)
 food_input.grid(row=2, column=2, sticky=W + E)
 food_input.bind('<Control-a>', callback)
+
+ants_input = Entry(frame, validate='key', vcmd=vcmd, textvariable=initial_val_ants, font='Helvetica 12')
+ants_label = Label(text="No. of ants:", background = bgcolor, font='Helvetica 14 bold')
+ants_label.grid(row=3, column=1, sticky=W)
+ants_input.grid(row=3, column=2, sticky=W + E)
+ants_input.bind('<Control-a>', callback)
 
 mazecanvas = MazeCanvas(frame, canvas)
 create_maze_button = Button(frame, text="Generate maze", command=mazecanvas.maze_gen, font='Helvetica 12', background = "azure")
