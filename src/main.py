@@ -1,8 +1,5 @@
-import threading
 from tkinter import *
-from tkinter import ttk
-from tkinter import messagebox
-import numpy as np
+
 from maze import *
 from ants import *
 from PIL import Image, ImageTk
@@ -45,6 +42,7 @@ class MazeCanvas():
     def run(self):
         if self.in_loop:
             locations, pheromones, score = next(self.func)
+            score_var.set("Score: " + str(score))
         else:
             no_ants = 5 if len(ants_input.get()) == 0 else int(ants_input.get())
 
@@ -52,6 +50,7 @@ class MazeCanvas():
                                    n_ants=no_ants, step_by_step=False,
                                    vaporization_rate=vp_rate_var.get(), Q=q_var.get(), pheromone_weight=pheromone_weight_var.get())
             locations, pheromones, score = next(self.func)
+            score_var.set("Score: " + str(score))
 
         y_init = self.y
         minval = np.min(pheromones)
@@ -212,19 +211,22 @@ ants_input.bind('<Control-a>', callback)
 
 q_var = DoubleVar()
 q_label = Label(text="Q: ", background = bgcolor, font='Helvetica 12 bold')
-q_scale = Scale(frame, from_=0.01, to=1.0, resolution = 0.01, orient = HORIZONTAL, variable = q_var, background = bgcolor, font = "Helvetica 12")
+q_scale = Scale(frame, from_=1, to=100, resolution = 1, orient = HORIZONTAL, variable = q_var, background = bgcolor, font = "Helvetica 12")
+q_scale.set(50)
 q_label.grid(row=4, column=1, sticky=W)
 q_scale.grid(row=4, column=2, sticky=W + E)
 
 vp_rate_var = DoubleVar()
 vp_rate_label = Label(text="Vapor. rate: ", background = bgcolor, font='Helvetica 12 bold')
-vp_rate_scale = Scale(frame, from_=0.8, to=1.0, resolution = 0.001, orient = HORIZONTAL, variable = vp_rate_var, background = bgcolor, font = "Helvetica 12")
+vp_rate_scale = Scale(frame, from_=0.9, to=1.0, resolution = 0.001, orient = HORIZONTAL, variable = vp_rate_var, background = bgcolor, font = "Helvetica 12")
+vp_rate_scale.set(0.999)
 vp_rate_label.grid(row=5, column=1, sticky=W)
 vp_rate_scale.grid(row=5, column=2, sticky=W + E)
 
 pheromone_weight_var = DoubleVar()
 pheromone_weight_label = Label(text="Pheromone w.: ", background = bgcolor, font='Helvetica 12 bold')
 pheromone_weight_scale = Scale(frame, from_=0.01, to=1.0, resolution = 0.001, orient = HORIZONTAL, variable = pheromone_weight_var, background = bgcolor, font = "Helvetica 12")
+pheromone_weight_scale.set(0.8)
 pheromone_weight_label.grid(row=6, column=1, sticky=W)
 pheromone_weight_scale.grid(row=6, column=2, sticky=W + E)
 
@@ -234,5 +236,10 @@ create_maze_button.grid(row=7, column=1,columnspan = 2,  sticky=W + E + N + S, p
 
 start_button = Button(frame, text="Start algorithm", command=mazecanvas.run, font='Helvetica 12', background = "azure")
 start_button.grid(row=8, column=1,columnspan = 2, sticky=W + E + N + S, padx = 5, pady = 5)
+
+score_var = StringVar()
+score_var.set("Score: ")
+score_label = Label(frame, textvariable = score_var, font='Helvetica 12 bold', background = "azure")
+score_label.grid(row=9, column=1, columnspan = 2, sticky=W + E + N + S, padx = 5, pady = 5)
 
 frame.mainloop()
