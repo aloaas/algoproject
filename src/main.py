@@ -35,13 +35,14 @@ class MazeCanvas():
         self.cell_height = None
         self.rectangles = []
         self.ants = []
+        self.foods = []
         self.func = None
         self.in_loop = False
         self.prev_locations = None
 
     def run(self):
         if self.in_loop:
-            locations, pheromones, score = next(self.func)
+            locations, pheromones, score, food_values = next(self.func)
             score_var.set("Score: " + str(score))
         else:
             no_ants = 5 if len(ants_input.get()) == 0 else int(ants_input.get())
@@ -49,7 +50,7 @@ class MazeCanvas():
             self.func = ant_colony(self.maze,
                                    n_ants=no_ants, step_by_step=False,
                                    vaporization_rate=vp_rate_var.get(), Q=q_var.get(), pheromone_weight=pheromone_weight_var.get())
-            locations, pheromones, score = next(self.func)
+            locations, pheromones, score, food_values = next(self.func)
             score_var.set("Score: " + str(score))
 
         y_init = self.y
@@ -57,13 +58,15 @@ class MazeCanvas():
         maxval = np.max(pheromones)
         loc_y = 0
         cell_nr = 0
+        for food in self.foods:
+            canvas.delete(food)
         for row in pheromones:
             x = self.x_init
             loc_x = 0
             for pixel in row:
                 if pixel > 0:
                     value = int(((pixel - minval) / (maxval - minval)) * 255)
-                    fill = self.from_rgb((255 - value, 255 - value // 2, 255 - value // 2))
+                    fill = self.from_rgb((255 - value // 2, 255 - value // 2, 255 - value))
                     if not self.in_loop:
                         cell = self.canvas.create_rectangle(x + 0.25 * self.cell_width, self.y + 0.25 * self.cell_height,
                                                             x + 0.75 * self.cell_width, self.y + 0.75 * self.cell_height,
@@ -86,6 +89,23 @@ class MazeCanvas():
                                                y_init + self.cell_height * ant_y, image=self.ant_image_u,
                                                anchor=NW)
                 self.ants.append(ant)
+        for food_coord, food_val in food_values.items():
+            food_y, food_x = food_coord
+            food_max = max(food_values.values())
+            food_min = min(food_values.values())
+            upper = food_val - food_min
+            lower = food_max - food_min
+            if lower == 0: food_fill = "green"
+            else:
+                food_value = int((upper / lower) * 255)
+                food_fill = self.from_rgb((110 - ((255 - food_value) //5), 255 - (255 - food_value)  // 2, 110 - ((255 - food_value) //5)))
+            food_cell = self.canvas.create_rectangle(self.x_init +self.cell_width* food_x,
+                                                     y_init +self.cell_height*food_y,
+                                                     self.x_init + self.cell_width * (food_x+1),
+                                                     y_init + self.cell_height*(food_y + 1),
+                                                     fill=food_fill,
+                                                     outline = food_fill)
+            self.foods.append(food_cell)
         self.canvas.update()
         self.y = y_init
         loc_y = 0

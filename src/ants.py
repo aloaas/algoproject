@@ -158,8 +158,7 @@ def ant_colony(maze, n_ants=10, vaporization_rate=0.97, pheromone_weight=0.8,
         for loc in food_values:
             food_values[loc]=food_values[loc]+food_restore_rate
         
-        print(food_values)
-        
+
         locations=[]
         for ant in ants:
             ant.step()
