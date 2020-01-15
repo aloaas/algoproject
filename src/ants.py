@@ -25,18 +25,22 @@ def get_reachable_map(maze):
             
     return reachable
 
+    
+
 # Class, , 
 # variables: path, current, value of food, maze, reachable_map, pheromone_trail, pheromone_map,   
  #pheromone_weight, Q   
 # Functions: select_next, step(leave pheromone, pop from path)
 class Ant:
-    def __init__(self, maze, reachable_map, pheromone_map, pheromone_weight, Q, score):
+    def __init__(self, maze, reachable_map, pheromone_map, pheromone_weight, Q, score, food_values, food_taken):
         self.maze = maze #final
         self.reachable_map = reachable_map #final
         self.pheromone_map = pheromone_map # changed when stepping towards home
         self.pheromone_weight = pheromone_weight
         self.Q = Q
         self.score=score
+        self.food_values=food_values
+        self.food_taken=food_taken
         
         
         self.home = tuple(i[0] for i in np.where(maze==3))
@@ -70,7 +74,8 @@ class Ant:
         self.current=self.path[-1]
         # If food is reached
         if self.maze[self.path[-1]]==2:
-            self.food_value=1 # TODO change this to get it from map/food value stuff
+            self.food_value=self.food_values[self.current]
+            self.food_values[self.current]=max(0, self.food_values[self.current]-self.food_taken)
             self.pheromone_trail=self.food_value*self.Q/len(self.path)
             
         # If home is reached take food from ant, empty path incase food was not found
@@ -109,21 +114,51 @@ class Ant:
         chosen=not_picked[np.random.choice(len(not_picked), p=probs)]
         return chosen
     
+ 
+def add_pheromones_near_food(pheromones, food_values,reachable_map, range_of_smell=4, smell_multiplier=0.001):
+    for loc in food_values:
+        val=food_values[loc]*smell_multiplier
+        traversed=set()
+        current={loc}
+        reachable=set()
+        for i in range(range_of_smell):
+            for curr in current:
+                reachable.update(reachable_map[curr])
+                
+            for node in reachable:
+                if node not in traversed:
+                    pheromones[node]+=val
+            
+            traversed.update(reachable)
+            current=reachable
+            reachable=set()
+            val/=2
     
+ 
+ 
 def ant_colony(maze, n_ants=10, vaporization_rate=0.97, pheromone_weight=0.8, 
-               n_iterations=sys.maxsize**10,  Q=50, step_by_step=False):
+               n_iterations=sys.maxsize**10,  Q=50, step_by_step=False,
+               food_restore_rate=0.001, food_taken=0.1, food_start_value=1.0):
     
     pheromones=np.ones(maze.shape)
     pheromones[np.where(maze==1)]=0
     score=[0]
-    # Pheromones near and at food
-    # Score keeping
+    
     
     reachable_map=get_reachable_map(maze)
     
-    ants=[Ant(maze, reachable_map, pheromones, pheromone_weight, Q, score) for i in range(n_ants)]
+    # Pheromones near and at food
+    food_values={i:food_start_value for i in list(zip(np.where(maze==2)[0], np.where(maze==2)[1]))}
+    add_pheromones_near_food(pheromones, food_values, reachable_map, smell_multiplier=4)    
+    
+    ants=[Ant(maze, reachable_map, pheromones, pheromone_weight, Q, score, food_values, food_taken) for i in range(n_ants)]
     
     for n_iter in range(n_iterations):
+        add_pheromones_near_food(pheromones, food_values, reachable_map, smell_multiplier=(1-vaporization_rate))
+        for loc in food_values:
+            food_values[loc]=food_values[loc]+food_restore_rate
+        
+        print(food_values)
         
         locations=[]
         for ant in ants:
@@ -132,11 +167,9 @@ def ant_colony(maze, n_ants=10, vaporization_rate=0.97, pheromone_weight=0.8,
         
         
         pheromones*=vaporization_rate
-        # Update maze/Food values
         
         yield locations, pheromones, score[0]
         if step_by_step:
             input()    
-            
 
 
