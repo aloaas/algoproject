@@ -11,7 +11,7 @@ bgcolor = "white"
 frame.configure(background=bgcolor)
 frame.resizable(False, False)
 
-c_width = 1280
+c_width = 960
 c_height = 900
 canvas = Canvas(frame, width=c_width, height=c_height)
 canvas.configure(background="white")
