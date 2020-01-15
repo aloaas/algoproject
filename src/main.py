@@ -104,9 +104,12 @@ class MazeCanvas():
             food_y, food_x = food_coord
             food_max = max(food_values.values())
             food_min = min(food_values.values())
+            print(food_values)
             upper = food_val - food_min
             lower = food_max - food_min
-            if lower == 0: food_fill = "green"
+
+            if lower == 0:
+                food_fill = "green"
             else:
                 food_value = int((upper / lower) * 255)
                 food_fill = self.from_rgb((110 - ((255 - food_value) //5), 255 - (255 - food_value)  // 2, 110 - ((255 - food_value) //5)))
@@ -272,7 +275,7 @@ food_restore_rate_scale.grid(row=7, column=2, sticky=W + E)
 
 food_taken_var = DoubleVar()
 food_taken_label = Label(text="Food taken: ", background = bgcolor, font='Helvetica 12 bold')
-food_taken_scale = Scale(frame, from_=0.05, to=1.0, resolution = 0.05, orient = HORIZONTAL, variable = pheromone_weight_var, background = bgcolor, font = "Helvetica 12")
+food_taken_scale = Scale(frame, from_=0.05, to=1.0, resolution = 0.05, orient = HORIZONTAL, variable = food_taken_var, background = bgcolor, font = "Helvetica 12")
 food_taken_scale.set(0.1)
 food_taken_label.grid(row=8, column=1, sticky=W)
 food_taken_scale.grid(row=8, column=2, sticky=W + E)
@@ -289,6 +292,7 @@ score_var = StringVar()
 score_var.set("Total score: ")
 score_label = Label(frame, textvariable = score_var, font='Helvetica 12 bold', background = "azure")
 score_label.grid(row=11, column=1, columnspan = 2, sticky=W + E + N + S, padx = 5, pady = 5)
+
 score_over_time_var = StringVar()
 score_over_time_var.set("Score over time: ")
 score_over_time_label = Label(frame, textvariable = score_over_time_var, font='Helvetica 12 bold', background = "azure")
