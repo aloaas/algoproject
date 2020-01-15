@@ -168,7 +168,7 @@ def ant_colony(maze, n_ants=10, vaporization_rate=0.97, pheromone_weight=0.8,
         
         pheromones*=vaporization_rate
         
-        yield locations, pheromones, score[0]
+        yield locations, pheromones, score[0], food_values
         if step_by_step:
             input()    
 
