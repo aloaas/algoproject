@@ -6,16 +6,18 @@ from PIL import Image, ImageTk
 
 frame = Tk()
 frame.title("Program")
-frame.geometry("1280x720")
+frame.geometry("1600x900")
 bgcolor = "white"
 frame.configure(background=bgcolor)
 frame.resizable(False, False)
 
-c_width = 1024
-c_height = 720
+c_width = 1280
+c_height = 900
 canvas = Canvas(frame, width=c_width, height=c_height)
 canvas.configure(background="white")
 canvas.grid(row=0, column=0, rowspan=50, columnspan=1)
+
+
 
 # value based on pixel color
 color = ["white", "gray", "green", "blue"]
@@ -39,19 +41,28 @@ class MazeCanvas():
         self.func = None
         self.in_loop = False
         self.prev_locations = None
+        self.iterations = 1
 
     def run(self):
         if self.in_loop:
             locations, pheromones, score, food_values = next(self.func)
-            score_var.set("Score: " + str(score))
+            score_var.set("Score: " + str(round(score, 5)))
+            score_over_time_var.set("Score over time: " + str(round(score / self.iterations, 5)))
         else:
             no_ants = 5 if len(ants_input.get()) == 0 else int(ants_input.get())
 
             self.func = ant_colony(self.maze,
                                    n_ants=no_ants, step_by_step=False,
-                                   vaporization_rate=vp_rate_var.get(), Q=q_var.get(), pheromone_weight=pheromone_weight_var.get())
+                                   vaporization_rate=vp_rate_var.get(),
+                                   Q=q_var.get(),
+                                   pheromone_weight=pheromone_weight_var.get(),
+                                   food_taken = food_taken_var.get(),
+                                   food_restore_rate=food_restore_rate_var.get())
+
             locations, pheromones, score, food_values = next(self.func)
-            score_var.set("Score: " + str(score))
+            score_var.set("Score: " + str(round(score, 5)))
+            score_over_time_var.set("Score over time: " + str(round(score / self.iterations, 5)))
+
 
         y_init = self.y
         minval = np.min(pheromones)
@@ -111,6 +122,7 @@ class MazeCanvas():
         loc_y = 0
         self.prev_locations = locations
         self.in_loop = True
+        self.iterations+= 1
         self.frame.after(30, self.run)
 
 
@@ -250,16 +262,36 @@ pheromone_weight_scale.set(0.8)
 pheromone_weight_label.grid(row=6, column=1, sticky=W)
 pheromone_weight_scale.grid(row=6, column=2, sticky=W + E)
 
+food_restore_rate_var = DoubleVar()
+food_restore_rate_label = Label(text="Food restore rate: ", background = bgcolor, font='Helvetica 12 bold')
+food_restore_rate_scale = Scale(frame, from_=0.001, to=0.5, resolution = 0.001, orient = HORIZONTAL, variable = food_restore_rate_var, background = bgcolor, font = "Helvetica 12")
+food_restore_rate_scale.set(0.001)
+food_restore_rate_label.grid(row=7, column=1, sticky=W)
+food_restore_rate_scale.grid(row=7, column=2, sticky=W + E)
+
+
+food_taken_var = DoubleVar()
+food_taken_label = Label(text="Food taken: ", background = bgcolor, font='Helvetica 12 bold')
+food_taken_scale = Scale(frame, from_=0.05, to=1.0, resolution = 0.05, orient = HORIZONTAL, variable = pheromone_weight_var, background = bgcolor, font = "Helvetica 12")
+food_taken_scale.set(0.1)
+food_taken_label.grid(row=8, column=1, sticky=W)
+food_taken_scale.grid(row=8, column=2, sticky=W + E)
+
+
 mazecanvas = MazeCanvas(frame, canvas)
 create_maze_button = Button(frame, text="Generate maze", command=mazecanvas.maze_gen, font='Helvetica 12', background = "azure")
-create_maze_button.grid(row=7, column=1,columnspan = 2,  sticky=W + E + N + S, padx = 5, pady = 5)
+create_maze_button.grid(row=9, column=1,columnspan = 2,  sticky=W + E + N + S, padx = 5, pady = 5)
 
 start_button = Button(frame, text="Start algorithm", command=mazecanvas.run, font='Helvetica 12', background = "azure")
-start_button.grid(row=8, column=1,columnspan = 2, sticky=W + E + N + S, padx = 5, pady = 5)
+start_button.grid(row=10, column=1,columnspan = 2, sticky=W + E + N + S, padx = 5, pady = 5)
 
 score_var = StringVar()
-score_var.set("Score: ")
+score_var.set("Total score: ")
 score_label = Label(frame, textvariable = score_var, font='Helvetica 12 bold', background = "azure")
-score_label.grid(row=9, column=1, columnspan = 2, sticky=W + E + N + S, padx = 5, pady = 5)
+score_label.grid(row=11, column=1, columnspan = 2, sticky=W + E + N + S, padx = 5, pady = 5)
+score_over_time_var = StringVar()
+score_over_time_var.set("Score over time: ")
+score_over_time_label = Label(frame, textvariable = score_over_time_var, font='Helvetica 12 bold', background = "azure")
+score_over_time_label.grid(row=12, column=1, columnspan = 2, sticky=W + E + N + S, padx = 5, pady = 5)
 
 frame.mainloop()
